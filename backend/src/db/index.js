@@ -8,7 +8,11 @@ import { fileURLToPath } from 'node:url';
 // on the host machine. Requires Node >= 22.5 (stable in 24+).
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.resolve(__dirname, '..', '..', 'data');
+// DB_DIR lets a deployment (e.g. a Railway Volume) point persistence at a mounted,
+// durable path instead of the source tree's local backend/data folder.
+const dataDir = process.env.DB_DIR
+  ? path.resolve(process.env.DB_DIR)
+  : path.resolve(__dirname, '..', '..', 'data');
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
 const dbPath = path.join(dataDir, 'games.db');
