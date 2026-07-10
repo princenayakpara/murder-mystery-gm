@@ -15,8 +15,10 @@ const initialState = {
   canStart: false,
   caseTitle: null,
   source: null,
+  difficulty: 'medium',
   character: null,
   roster: [],
+  avatars: {}, // slot -> avatarUrl
   transcript: [],
   clues: [],
   briefingReady: { readyCount: 0, total: 0 },
@@ -50,11 +52,14 @@ function reducer(state, action) {
       return {
         ...state,
         status: action.state.status,
+        caseTitle: action.state.caseTitle ?? state.caseTitle,
+        difficulty: action.state.difficulty ?? state.difficulty,
         players: action.state.players,
         transcript: action.state.transcript,
         clues: action.state.clues,
         character: action.state.character ?? state.character,
         roster: action.state.roster?.length ? action.state.roster : state.roster,
+        avatars: Object.keys(action.state.avatars || {}).length ? action.state.avatars : state.avatars,
         reveal: action.state.reveal ?? state.reveal,
         hasVoted: action.state.hasVoted,
       };
@@ -74,6 +79,7 @@ function reducer(state, action) {
         status: action.payload.status,
         caseTitle: action.payload.caseTitle ?? state.caseTitle,
         source: action.payload.source ?? state.source,
+        difficulty: action.payload.difficulty ?? state.difficulty,
       };
     case 'SET_CHARACTER':
       return { ...state, character: action.character };
@@ -83,6 +89,8 @@ function reducer(state, action) {
       return { ...state, ready: true };
     case 'ROSTER_REVEAL':
       return { ...state, roster: action.roster };
+    case 'AVATARS_UPDATE':
+      return { ...state, avatars: action.avatars };
     case 'CHAT_MESSAGE':
       return { ...state, transcript: [...state.transcript, action.message] };
     case 'CLUE_NEW':
@@ -154,6 +162,9 @@ export function GameProvider({ children }) {
     function onRosterReveal(roster) {
       dispatch({ type: 'ROSTER_REVEAL', roster });
     }
+    function onAvatarsUpdate(avatars) {
+      dispatch({ type: 'AVATARS_UPDATE', avatars });
+    }
     function onChatMessage(message) {
       dispatch({ type: 'CHAT_MESSAGE', message });
     }
@@ -174,6 +185,7 @@ export function GameProvider({ children }) {
     socket.on('game:character', onCharacter);
     socket.on('briefing:update', onBriefingUpdate);
     socket.on('roster:reveal', onRosterReveal);
+    socket.on('game:avatars', onAvatarsUpdate);
     socket.on('chat:message', onChatMessage);
     socket.on('clue:new', onClueNew);
     socket.on('vote:update', onVoteUpdate);
@@ -189,6 +201,7 @@ export function GameProvider({ children }) {
       socket.off('game:character', onCharacter);
       socket.off('briefing:update', onBriefingUpdate);
       socket.off('roster:reveal', onRosterReveal);
+      socket.off('game:avatars', onAvatarsUpdate);
       socket.off('chat:message', onChatMessage);
       socket.off('clue:new', onClueNew);
       socket.off('vote:update', onVoteUpdate);
@@ -219,8 +232,8 @@ export function GameProvider({ children }) {
     });
   }, []);
 
-  const startGame = useCallback((theme) => {
-    socket.emit('game:start', { roomCode: stateRef.current.roomCode, theme }, (res) => {
+  const startGame = useCallback((theme, difficulty) => {
+    socket.emit('game:start', { roomCode: stateRef.current.roomCode, theme, difficulty }, (res) => {
       if (!res.ok) dispatch({ type: 'SET_ERROR', error: res.error });
     });
   }, []);
@@ -236,6 +249,10 @@ export function GameProvider({ children }) {
 
   const askGM = useCallback((question) => {
     socket.emit('gm:ask', { roomCode: stateRef.current.roomCode, question });
+  }, []);
+
+  const askHint = useCallback(() => {
+    socket.emit('gm:hint', { roomCode: stateRef.current.roomCode });
   }, []);
 
   const accuse = useCallback((targetSlot) => {
@@ -272,6 +289,7 @@ export function GameProvider({ children }) {
     markReady,
     sendChat,
     askGM,
+    askHint,
     accuse,
     castVote,
     endGame,

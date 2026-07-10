@@ -1,4 +1,5 @@
 import { generateRoomCode, generateId } from '../utils/ids.js';
+import { avatarUrlFor } from '../gm/avatarGenerator.js';
 
 /**
  * @typedef {Object} Player
@@ -13,6 +14,11 @@ import { generateRoomCode, generateId } from '../utils/ids.js';
 
 const MIN_PLAYERS_TO_START = 4;
 const MAX_PLAYERS = 8;
+const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'];
+
+function normalizeDifficulty(difficulty) {
+  return VALID_DIFFICULTIES.includes(difficulty) ? difficulty : 'medium';
+}
 
 /** In-memory room registry. Snapshotted to SQLite on major state changes by the caller. */
 class RoomManager {
@@ -31,6 +37,7 @@ class RoomManager {
       code,
       status: 'lobby',
       theme: null,
+      difficulty: 'medium',
       createdAt: Date.now(),
       finishedAt: null,
       players: [hostPlayer],
@@ -62,6 +69,7 @@ class RoomManager {
       code: snapshot.roomCode,
       status: snapshot.status,
       theme: snapshot.theme,
+      difficulty: normalizeDifficulty(snapshot.difficulty),
       createdAt: snapshot.createdAt,
       finishedAt: snapshot.finishedAt,
       players: (snapshot.players || []).map((p) => ({ ...p, socketId: null, connected: false })),
@@ -162,7 +170,7 @@ class RoomManager {
     if (!full) return null;
     // Never leak is_murderer or true_whereabouts to the client.
     const { is_murderer, true_whereabouts, ...safe } = full;
-    return safe;
+    return { ...safe, avatarUrl: avatarUrlFor(room.mystery.case_id, full.character_name) };
   }
 
   publicPlayerList(room) {
@@ -186,7 +194,16 @@ class RoomManager {
       name: c.character_name,
       publicBio: c.public_bio,
       controlledBy: room.players.find((p) => p.slot === c.player_slot)?.name || null,
+      avatarUrl: avatarUrlFor(room.mystery.case_id, c.character_name),
     }));
+  }
+
+  /** slot -> avatarUrl map, so the frontend can decorate chat messages by authorSlot. */
+  avatarMap(room) {
+    if (!room.mystery) return {};
+    return Object.fromEntries(
+      room.mystery.players.map((c) => [c.player_slot, avatarUrlFor(room.mystery.case_id, c.character_name)])
+    );
   }
 
   toSnapshot(room) {
@@ -197,6 +214,7 @@ class RoomManager {
       caseTitle: room.mystery?.case_title,
       status: room.status,
       theme: room.theme,
+      difficulty: room.difficulty,
       mystery: room.mystery,
       players: room.players.map(({ socketId, ...rest }) => rest),
       transcript: room.transcript,
@@ -214,4 +232,4 @@ class RoomManager {
 }
 
 export const roomManager = new RoomManager();
-export { MIN_PLAYERS_TO_START, MAX_PLAYERS };
+export { MIN_PLAYERS_TO_START, MAX_PLAYERS, VALID_DIFFICULTIES, normalizeDifficulty };

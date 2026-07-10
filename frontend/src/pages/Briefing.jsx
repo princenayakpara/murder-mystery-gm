@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGame } from '../state/GameContext.jsx';
+import Avatar from '../components/Avatar.jsx';
 
 export default function Briefing() {
   const { state, markReady } = useGame();
@@ -13,12 +14,23 @@ export default function Briefing() {
     );
   }
 
+  const usedFallback = state.source && state.source !== 'ai';
+
   return (
     <div className="page-narrow">
-      <div className="hero">
+      <div className="hero briefing-hero">
+        <Avatar src={c.avatarUrl} name={c.character_name} size={96} className="avatar-hero" />
         <p className="eyebrow">{state.caseTitle}</p>
         <h1>Your Character: {c.character_name}</h1>
       </div>
+
+      {usedFallback && (
+        <div className="banner banner-info">
+          {state.theme
+            ? `You requested a "${state.theme}" case, but the offline default mystery ("Khoon Ki Baraat") is being used instead — the AI Game Master isn't available right now (no API key/credits configured on the server).`
+            : `The offline default mystery ("Khoon Ki Baraat") is being used — the AI Game Master isn't available right now (no API key/credits configured on the server).`}
+        </div>
+      )}
 
       <div className="card">
         <h2>Public Bio</h2>

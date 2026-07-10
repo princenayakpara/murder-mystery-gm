@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Avatar from './Avatar.jsx';
 
 function messageClass(type) {
   switch (type) {
@@ -23,7 +24,7 @@ function speakerLabel(m) {
   return m.authorName;
 }
 
-export default function ChatPanel({ transcript, mySlot, onSend, onAsk }) {
+export default function ChatPanel({ transcript, mySlot, avatars = {}, onSend, onAsk, onHint }) {
   const [text, setText] = useState('');
   const [mode, setMode] = useState('chat'); // 'chat' | 'ask'
   const bottomRef = useRef(null);
@@ -44,12 +45,19 @@ export default function ChatPanel({ transcript, mySlot, onSend, onAsk }) {
   return (
     <div className="chat-panel">
       <div className="chat-scroll">
-        {transcript.map((m) => (
-          <div key={m.id} className={messageClass(m.type) + (m.authorSlot === mySlot ? ' msg-mine' : '')}>
-            {speakerLabel(m) && <div className="msg-author">{speakerLabel(m)}</div>}
-            <div className="msg-text">{m.text}</div>
-          </div>
-        ))}
+        {transcript.map((m) => {
+          const inCharacter = m.authorSlot != null;
+          const avatarUrl = inCharacter ? avatars[m.authorSlot] : null;
+          return (
+            <div key={m.id} className={messageClass(m.type) + (m.authorSlot === mySlot ? ' msg-mine' : '')}>
+              {inCharacter && <Avatar src={avatarUrl} name={m.authorName} size={30} className="msg-avatar" />}
+              <div className="msg-body">
+                {speakerLabel(m) && <div className="msg-author">{speakerLabel(m)}</div>}
+                <div className="msg-text">{m.text}</div>
+              </div>
+            </div>
+          );
+        })}
         <div ref={bottomRef} />
       </div>
       <form className="chat-input-row" onSubmit={submit}>
@@ -60,6 +68,11 @@ export default function ChatPanel({ transcript, mySlot, onSend, onAsk }) {
           <button type="button" className={mode === 'ask' ? 'mode-btn active' : 'mode-btn'} onClick={() => setMode('ask')}>
             Ask GM
           </button>
+          {onHint && (
+            <button type="button" className="mode-btn hint-btn" onClick={onHint} title="Get a hint from the Game Master">
+              💡 Hint
+            </button>
+          )}
         </div>
         <input
           value={text}

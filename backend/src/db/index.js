@@ -22,13 +22,26 @@ db.exec('PRAGMA journal_mode = WAL;');
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf-8');
 db.exec(schema);
 
+// Lightweight migration: schema.sql only applies to a brand-new DB file. An already-
+// deployed DB (e.g. the Railway volume from before this column existed) needs an
+// explicit ALTER TABLE, since `CREATE TABLE IF NOT EXISTS` is a no-op once the table
+// already exists without this column.
+function ensureColumn(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  const exists = cols.some((c) => c.name === column);
+  if (!exists) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+ensureColumn('games', 'difficulty', "TEXT NOT NULL DEFAULT 'medium'");
+
 const upsertStmt = db.prepare(`
   INSERT INTO games (
-    id, room_code, case_id, case_title, status, theme,
+    id, room_code, case_id, case_title, status, theme, difficulty,
     mystery_json, players_json, transcript_json, events_json, clues_json, votes_json, reveal_json,
     created_at, updated_at, finished_at
   ) VALUES (
-    :id, :roomCode, :caseId, :caseTitle, :status, :theme,
+    :id, :roomCode, :caseId, :caseTitle, :status, :theme, :difficulty,
     :mysteryJson, :playersJson, :transcriptJson, :eventsJson, :cluesJson, :votesJson, :revealJson,
     :createdAt, :updatedAt, :finishedAt
   )
@@ -38,6 +51,7 @@ const upsertStmt = db.prepare(`
     case_title = excluded.case_title,
     status = excluded.status,
     theme = excluded.theme,
+    difficulty = excluded.difficulty,
     mystery_json = excluded.mystery_json,
     players_json = excluded.players_json,
     transcript_json = excluded.transcript_json,
@@ -58,6 +72,7 @@ export function saveSnapshot(snapshot) {
     caseTitle: snapshot.caseTitle || null,
     status: snapshot.status,
     theme: snapshot.theme || null,
+    difficulty: snapshot.difficulty || 'medium',
     mysteryJson: JSON.stringify(snapshot.mystery || null),
     playersJson: JSON.stringify(snapshot.players || []),
     transcriptJson: JSON.stringify(snapshot.transcript || []),
@@ -80,6 +95,7 @@ function rowToRecord(row) {
     caseTitle: row.case_title,
     status: row.status,
     theme: row.theme,
+    difficulty: row.difficulty || 'medium',
     mystery: JSON.parse(row.mystery_json || 'null'),
     players: JSON.parse(row.players_json || '[]'),
     transcript: JSON.parse(row.transcript_json || '[]'),
@@ -103,6 +119,7 @@ export function listFinishedGames() {
     roomCode: g.roomCode,
     caseTitle: g.caseTitle,
     theme: g.theme,
+    difficulty: g.difficulty,
     playerCount: g.players.length,
     createdAt: g.createdAt,
     finishedAt: g.finishedAt,

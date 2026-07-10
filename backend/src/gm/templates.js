@@ -19,6 +19,15 @@ export function templateQAAnswer(question) {
   return `The Game Master considers the question carefully. "That's worth looking into," comes the reply, "but right now, the room offers no clearer answer than what you already know. Keep pressing — talk to each other, compare stories, and see what doesn't add up."`;
 }
 
+/** Easy-difficulty-only explicit hint, used when no AI is configured. */
+export function templateHint(revealedClues) {
+  if (!revealedClues.length) {
+    return `"Here's a nudge," the Game Master offers. "Nothing concrete has come to light yet — press someone about where they really were during the blackout. Alibis are the fastest way to find a crack."`;
+  }
+  const pick = revealedClues[revealedClues.length - 1];
+  return `"Here's a nudge," the Game Master offers. "Go back to this: ${pick} — ask around about who that actually points toward, and whether anyone's story doesn't quite line up with it."`;
+}
+
 export function templateReveal({ mystery, transcript, revealedClues, votes }) {
   const murderer = mystery.players.find((p) => p.is_murderer);
   const others = mystery.players.filter((p) => !p.is_murderer);

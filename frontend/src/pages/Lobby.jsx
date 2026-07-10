@@ -9,14 +9,33 @@ const THEMES = [
   { value: 'Ancient Kingdom', label: 'Ancient Kingdom' },
 ];
 
+const DIFFICULTIES = [
+  {
+    value: 'easy',
+    label: 'Easy',
+    description: 'The GM steps in sooner, spells out clues clearly, and hints are available on request.',
+  },
+  {
+    value: 'medium',
+    label: 'Medium',
+    description: 'Standard pacing — the GM narrates clues clearly but lets you draw your own conclusions.',
+  },
+  {
+    value: 'hard',
+    label: 'Hard',
+    description: 'The GM waits longer to intervene, clues are oblique, and questions get evasive, in-character answers.',
+  },
+];
+
 export default function Lobby() {
   const { state, startGame, clearError } = useGame();
   const [theme, setTheme] = useState('');
+  const [difficulty, setDifficulty] = useState('medium');
   const [starting, setStarting] = useState(false);
 
   const handleStart = () => {
     setStarting(true);
-    startGame(theme);
+    startGame(theme, difficulty);
   };
 
   return (
@@ -65,6 +84,22 @@ export default function Lobby() {
               </option>
             ))}
           </select>
+
+          <label>Difficulty</label>
+          <div className="difficulty-picker">
+            {DIFFICULTIES.map((d) => (
+              <button
+                type="button"
+                key={d.value}
+                className={difficulty === d.value ? 'difficulty-option selected' : 'difficulty-option'}
+                onClick={() => setDifficulty(d.value)}
+              >
+                <strong>{d.label}</strong>
+                <span className="difficulty-desc">{d.description}</span>
+              </button>
+            ))}
+          </div>
+
           <button className="primary-btn" disabled={!state.canStart || starting} onClick={handleStart}>
             {starting ? 'Generating mystery…' : state.canStart ? 'Start Game' : 'Waiting for 4+ players…'}
           </button>

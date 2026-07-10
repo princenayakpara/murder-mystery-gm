@@ -103,15 +103,41 @@ Hard requirements:
 Call the generate_mystery tool with the complete case. Do not include any text outside the tool call.`;
 }
 
+// Per-theme guidance so the requested theme actually shapes setting/roles/vocabulary,
+// not just a one-word label — while every theme still produces the same case JSON
+// shape (case_title, setting, victim, players[], ...) so nothing downstream changes.
+export const THEME_GUIDANCE = {
+  'Indian Wedding': `Setting: a wedding/sangeet-style family gathering in India (haveli, resort, or family home). Cast: family members, in-laws, the bride/groom, household staff, wedding planners. Vocabulary: warm, familial, laced with Hindi/Urdu terms for relationships and ceremonies where natural (sangeet, daftar, baraat, etc.), monsoon/festival atmosphere.`,
+  'Haunted House': `Setting: an old mansion or estate with a dark history, guests trapped by a storm or isolation. Cast: relatives gathered for a will reading, an eccentric owner's guests, groundskeepers/butlers. Vocabulary: gothic, atmospheric — creaking floors, candlelight, portraits, locked wings, family curses. Keep any "supernatural" flavor as unreliable atmosphere/rumor, not literal — the murderer must be a human character with a mundane motive and method.`,
+  'Space Station': `Setting: an isolated orbital research/mining station with a skeleton crew, no easy way to leave or call for help. Cast: scientists, engineers, the station commander, a corporate liaison, security officer. Vocabulary: clipped, technical — airlocks, life support, comms logs, EVA suits, docking bays, shift rotations.`,
+  'Cyber Crime': `Setting: a tech company, hacker collective, or cybersecurity firm during a high-stakes incident (a breach, a launch night, a data leak). Cast: engineers, executives, a whistleblower, security consultants, investors. Vocabulary: modern tech-industry jargon — servers, encrypted messages, badge logs, VPNs, Slack threads, git history — used as concrete discoverable evidence types.`,
+  'Ancient Kingdom': `Setting: a royal court, temple, or fortress in a pre-modern kingdom (loosely inspired by any historical era of your choosing — Indian, Egyptian, Mesopotamian, etc.). Cast: nobles, advisors, guards, priests, servants, a rival heir. Vocabulary: formal and period-appropriate — courts, chambers, seals, scrolls, oaths, succession — avoiding modern anachronisms.`,
+};
+
 export function mysteryGenerationUserPrompt({ theme, playerCount }) {
+  const resolvedTheme = theme && THEME_GUIDANCE[theme] ? theme : 'Indian Wedding';
+  const guidance = THEME_GUIDANCE[resolvedTheme];
   return `Generate a brand-new murder mystery case.
-Theme: ${theme || 'Indian wedding / family gathering (classic "Khoon Ki Baraat" style)'}
+Theme: ${resolvedTheme}
+Theme guidance (shape the setting, character roles, and narration vocabulary around this — but keep the exact same JSON fields as always): ${guidance}
 Number of players: ${playerCount}
 
 Make sure it is entirely original (different victim, cast, setting, and solution from any previous case), logically airtight, and fun to investigate over roughly 30-45 minutes of chat-based play.`;
 }
 
-export function gmPersonaPreamble(mystery) {
+const DIFFICULTY_NARRATION_NOTE = {
+  easy: `DIFFICULTY: EASY. Be generous and clear. State clues plainly and unambiguously — a new player should immediately understand what the fact means and who it points toward. It's fine to gently underline why a detail matters ("this seems to place someone near the scene at the wrong time"). Keep sentences simple.`,
+  medium: `DIFFICULTY: MEDIUM. Standard behavior — narrate evidence clearly in-fiction but let players draw their own conclusions about what it means. Don't over-explain.`,
+  hard: `DIFFICULTY: HARD. Be oblique and atmospheric. State the fact so it is technically discoverable and true to the case file, but wrap it in scene detail and let players do the work of parsing its significance — do not spell out who it implicates or why it matters. Favor implication over statement.`,
+};
+
+const DIFFICULTY_QA_NOTE = {
+  easy: `DIFFICULTY: EASY. Answer directly and helpfully — point investigators toward what's actually relevant, and if they ask for a hint or seem stuck, you may explicitly suggest a next step ("you might want to compare that with what X said about the same time").`,
+  medium: `DIFFICULTY: MEDIUM. Answer helpfully but economically, as normal — give investigators something to work with without hand-holding.`,
+  hard: `DIFFICULTY: HARD. Answer evasively and in-character — respond the way a wary witness or an uncooperative scene actually would: partial, guarded, sometimes requiring a sharper or more specific question before yielding anything useful. Never refuse to answer outright, but make players work for clarity. Do not offer hints even if asked directly — stay in-world and deflect ("that's not really my place to say").`,
+};
+
+export function gmPersonaPreamble(mystery, difficulty = 'medium') {
   return `You are the AI Game Master for a live murder mystery party game titled "${mystery.case_title}", set in: ${mystery.setting}.
 Victim: ${mystery.victim.name} (${mystery.victim.age}), ${mystery.victim.relation_to_group}. Public knowledge so far: ${mystery.victim.cause_of_death_public_knowledge}
 
@@ -121,21 +147,32 @@ You are a NEUTRAL NARRATOR, not a player and not a detective. Rules you must alw
 3. Stay strictly in-world and in a consistent narrator voice — atmospheric but concise (2-5 sentences per message unless doing the final reveal).
 4. Never break the fourth wall, never mention "the JSON", "the database", "hidden_information", "secrets", or any game-engine terminology to players.
 5. When answering a direct question, ground your answer in the case file and in what has already happened in the transcript; stay consistent with anything you or a player has already established.
-6. If asked something the case file has no answer for, improvise a small, plausible, non-contradictory detail rather than saying "I don't know" — but never invent something that would resolve the mystery outright.`;
+6. If asked something the case file has no answer for, improvise a small, plausible, non-contradictory detail rather than saying "I don't know" — but never invent something that would resolve the mystery outright.
+
+${DIFFICULTY_NARRATION_NOTE[difficulty] || DIFFICULTY_NARRATION_NOTE.medium}`;
 }
 
-export function qaSystemPrompt(mystery) {
-  return `${gmPersonaPreamble(mystery)}
+export function qaSystemPrompt(mystery, difficulty = 'medium') {
+  return `${gmPersonaPreamble(mystery, difficulty)}
 
-You are answering a specific question a player asked in-character (as their investigating character, addressed to the Game Master / the scene / an NPC). Answer helpfully but economically — give investigators something to work with, not a monologue. If the question is a request to inspect/examine something (a room, an object, a body, a document), describe what a careful search would plausibly reveal, drawing on the case file's hidden_information where relevant to that subject; otherwise describe an evocative but non-revelatory observation.
+You are answering a specific question a player asked in-character (as their investigating character, addressed to the Game Master / the scene / an NPC). If the question is a request to inspect/examine something (a room, an object, a body, a document), describe what a careful search would plausibly reveal, drawing on the case file's hidden_information where relevant to that subject; otherwise describe an evocative but non-revelatory observation.
+
+${DIFFICULTY_QA_NOTE[difficulty] || DIFFICULTY_QA_NOTE.medium}
 
 Never reveal another player's private secrets verbatim unless the question is specifically and legitimately about publicly-discoverable evidence that would expose it (e.g. asking to see phone records when that IS the discoverable evidence). When in doubt, favor atmosphere and partial clues over full disclosure.`;
 }
 
-export function eventInjectionSystemPrompt(mystery) {
-  return `${gmPersonaPreamble(mystery)}
+export function eventInjectionSystemPrompt(mystery, difficulty = 'medium') {
+  return `${gmPersonaPreamble(mystery, difficulty)}
 
-The investigation has stalled. You must inject ONE new piece of evidence to move things forward, dramatized as an in-fiction event (a new witness speaking up, a CCTV/security detail, a diary page, a phone record, a fingerprint or forensic report, a household staff member's recollection, weather/power records, etc. — pick whatever fits the setting). You will be given the exact hidden_information string to work into the scene. Do not just restate it flatly — narrate the moment it comes to light, in 2-4 sentences, in your narrator voice. Do not add new facts beyond what's given. End with the concrete fact clearly stated so players can act on it.`;
+The investigation has stalled. You must inject ONE new piece of evidence to move things forward, dramatized as an in-fiction event (a new witness speaking up, a CCTV/security detail, a diary page, a phone record, a fingerprint or forensic report, a household staff member's recollection, weather/power records, etc. — pick whatever fits the setting). You will be given the exact hidden_information string to work into the scene. Do not just restate it flatly — narrate the moment it comes to light, in 2-4 sentences, in your narrator voice. Do not add new facts beyond what's given.`;
+}
+
+/** A direct, explicit hint — only ever called on Easy difficulty, when a player explicitly asks for one. */
+export function hintSystemPrompt(mystery) {
+  return `${gmPersonaPreamble(mystery, 'easy')}
+
+A player has explicitly asked for a hint (this only happens on Easy difficulty). Give one short, genuinely useful nudge: point at a specific clue already revealed (or a specific character worth re-examining) and briefly say why it's worth another look. Do not name the murderer outright, but you may be fairly direct about which thread to pull next.`;
 }
 
 export function eventInjectionUserPrompt({ mystery, transcriptExcerpt, revealedClues, focusCharacterName, factToReveal, reason }) {

@@ -1,6 +1,7 @@
-import { roomManager } from '../rooms/roomManager.js';
+import { roomManager, normalizeDifficulty } from '../rooms/roomManager.js';
 import { gameMaster } from '../gm/gameMaster.js';
 import { saveSnapshot } from '../db/index.js';
+import { pregenerateAvatars } from '../gm/avatarGenerator.js';
 
 const TIME_STALL_INTERVAL_MS = 20 * 1000;
 const activeRoomIntervals = new Map();
@@ -96,11 +97,15 @@ function fullStateForReconnect(room, player) {
   return {
     roomCode: room.code,
     status: room.status,
+    caseTitle: room.mystery?.case_title || null,
+    difficulty: room.difficulty,
+    theme: room.theme,
     players: roomManager.publicPlayerList(room),
     transcript: room.transcript,
     clues: room.clues,
     character: player.slot != null ? roomManager.getCharacterFor(room, player.slot) : null,
     roster: room.status === 'lobby' ? [] : roomManager.publicCharacterRoster(room),
+    avatars: room.status === 'lobby' ? {} : roomManager.avatarMap(room),
     reveal: room.status === 'revealed' ? room.reveal : null,
     hasVoted: room.votes[player.slot] != null,
   };
@@ -149,7 +154,7 @@ export function registerHandlers(io, socket) {
     persist(room);
   });
 
-  socket.on('game:start', async ({ roomCode, theme } = {}, cb) => {
+  socket.on('game:start', async ({ roomCode, theme, difficulty } = {}, cb) => {
     const room = roomManager.getRoom(roomCode);
     if (!room) return cb?.({ ok: false, error: 'Room not found.' });
     const requester = room.players.find((p) => p.socketId === socket.id);
@@ -158,15 +163,26 @@ export function registerHandlers(io, socket) {
 
     try {
       const playerCount = Math.min(8, Math.max(5, room.players.length));
+      room.difficulty = normalizeDifficulty(difficulty);
       const { mystery, source, reason } = await gameMaster.generateMystery({ theme, playerCount });
       room.mystery = mystery;
+      // room.theme is what the host requested; `source` (ai/seed/seed-fallback) tells
+      // the UI whether that request was actually honored or the offline default was
+      // used instead — no need for a separate "requested vs actual" field.
       room.theme = theme || null;
       room.status = 'briefing';
       gameMaster.initRoom(room);
       roomManager.assignSlots(room);
+      pregenerateAvatars(mystery); // warm the avatar cache so briefing screens load instantly
 
-      cb?.({ ok: true, source, reason });
-      io.to(room.code).emit('game:status', { status: room.status, caseTitle: mystery.case_title, source });
+      cb?.({ ok: true, source, reason, difficulty: room.difficulty, theme: room.theme });
+      io.to(room.code).emit('game:status', {
+        status: room.status,
+        caseTitle: mystery.case_title,
+        source,
+        difficulty: room.difficulty,
+        theme: room.theme,
+      });
       room.players.forEach((p) => sendPrivateCharacter(io, room, p));
       broadcastLobby(io, room);
       startTimeStallInterval(io, room);
@@ -195,6 +211,7 @@ export function registerHandlers(io, socket) {
       room.status = 'investigating';
       io.to(room.code).emit('game:status', { status: room.status });
       io.to(room.code).emit('roster:reveal', roomManager.publicCharacterRoster(room));
+      io.to(room.code).emit('game:avatars', roomManager.avatarMap(room));
       const opening = {
         id: `sys_${Date.now()}`,
         ts: Date.now(),
@@ -242,6 +259,19 @@ export function registerHandlers(io, socket) {
     });
     broadcastMessage(io, room, questionMsg);
     broadcastMessage(io, room, answerMsg);
+    persist(room);
+  });
+
+  socket.on('gm:hint', async ({ roomCode } = {}) => {
+    const room = roomManager.getRoom(roomCode);
+    if (!room || room.status !== 'investigating') return;
+    if (room.difficulty !== 'easy') return; // hints are an Easy-only feature, enforced server-side too
+    const player = room.players.find((p) => p.socketId === socket.id);
+    if (!player) return;
+
+    const { requestMsg, hintMsg } = await gameMaster.giveHint(room, { slot: player.slot, name: player.name });
+    broadcastMessage(io, room, requestMsg);
+    broadcastMessage(io, room, hintMsg);
     persist(room);
   });
 

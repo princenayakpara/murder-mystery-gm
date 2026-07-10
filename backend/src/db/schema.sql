@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS games (
   case_title TEXT,
   status TEXT NOT NULL DEFAULT 'lobby',
   theme TEXT,
+  difficulty TEXT NOT NULL DEFAULT 'medium',
   mystery_json TEXT,
   players_json TEXT,
   transcript_json TEXT,

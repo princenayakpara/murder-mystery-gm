@@ -16,8 +16,9 @@ import {
   eventInjectionUserPrompt,
   revealSystemPrompt,
   revealUserPrompt,
+  hintSystemPrompt,
 } from './prompts.js';
-import { templateEventNarration, templateQAAnswer, templateReveal } from './templates.js';
+import { templateEventNarration, templateQAAnswer, templateReveal, templateHint } from './templates.js';
 
 const MAX_TRANSCRIPT_CHARS_FOR_AI = 12000;
 
@@ -137,7 +138,7 @@ export const gameMaster = {
     if (config.hasAI) {
       try {
         answerText = await callText({
-          system: qaSystemPrompt(room.mystery),
+          system: qaSystemPrompt(room.mystery, room.difficulty),
           messages: [
             {
               role: 'user',
@@ -160,6 +161,45 @@ export const gameMaster = {
     return { questionMsg, answerMsg };
   },
 
+  /**
+   * Explicit hint request — only offered to players on Easy difficulty (enforced by the
+   * caller/socket handler, not here, so this stays a pure GM behavior function).
+   */
+  async giveHint(room, { slot, name }) {
+    const requestMsg = pushTranscript(room, {
+      type: 'chat',
+      authorSlot: slot,
+      authorName: name,
+      text: `${name} asks the Game Master for a hint.`,
+    });
+
+    let hintText;
+    if (config.hasAI) {
+      try {
+        hintText = await callText({
+          system: hintSystemPrompt(room.mystery),
+          messages: [
+            {
+              role: 'user',
+              content: `Transcript so far:\n${transcriptExcerpt(room)}\n\nClues already revealed: ${
+                room.clues.map((c) => c.text).join(' | ') || '(none)'
+              }\n\nGive ${name} (playing ${characterName(room, slot)}) one useful hint now.`,
+            },
+          ],
+          maxTokens: 250,
+        });
+      } catch (err) {
+        console.error('[gameMaster] AI hint failed, using template fallback:', err.message);
+        hintText = templateHint(room.clues.map((c) => c.text));
+      }
+    } else {
+      hintText = templateHint(room.clues.map((c) => c.text));
+    }
+
+    const hintMsg = pushTranscript(room, { type: 'gm', authorSlot: null, authorName: 'Game Master', text: hintText });
+    return { requestMsg, hintMsg };
+  },
+
   /** Injects the next unrevealed clue as an in-fiction event. Logs the intervention reason. */
   async triggerEvent(room, reason, { avoidSlot } = {}) {
     const focusSlot = mostSuspectedSlot(room);
@@ -173,7 +213,7 @@ export const gameMaster = {
     if (config.hasAI) {
       try {
         narration = await callText({
-          system: eventInjectionSystemPrompt(room.mystery),
+          system: eventInjectionSystemPrompt(room.mystery, room.difficulty),
           messages: [
             {
               role: 'user',

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Avatar from './Avatar.jsx';
 
 export default function PlayerList({ roster, mySlot, onAccuse }) {
   const [expanded, setExpanded] = useState(null);
@@ -10,7 +11,8 @@ export default function PlayerList({ roster, mySlot, onAccuse }) {
         {roster.map((c) => (
           <li key={c.slot} className={c.slot === mySlot ? 'roster-card roster-mine' : 'roster-card'}>
             <div className="roster-header" onClick={() => setExpanded(expanded === c.slot ? null : c.slot)}>
-              <div>
+              <Avatar src={c.avatarUrl} name={c.name} size={36} />
+              <div className="roster-header-text">
                 <strong>{c.name}</strong>
                 {c.controlledBy && <span className="muted small"> — played by {c.controlledBy}</span>}
                 {!c.controlledBy && <span className="tag tag-muted">NPC</span>}

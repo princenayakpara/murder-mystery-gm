@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Avatar from './Avatar.jsx';
 
 export default function VotePanel({ roster, mySlot, hasVoted, voteStatus, onVote, onEndGame, isHost }) {
   const [selected, setSelected] = useState(null);
@@ -24,6 +25,7 @@ export default function VotePanel({ roster, mySlot, hasVoted, voteStatus, onVote
                   checked={selected === c.slot}
                   onChange={() => setSelected(c.slot)}
                 />
+                <Avatar src={c.avatarUrl} name={c.name} size={28} />
                 {c.name}
               </label>
             ))}

@@ -6,7 +6,7 @@ import PlayerList from '../components/PlayerList.jsx';
 import VotePanel from '../components/VotePanel.jsx';
 
 export default function Investigation() {
-  const { state, sendChat, askGM, accuse, castVote, endGame } = useGame();
+  const { state, sendChat, askGM, askHint, accuse, castVote, endGame } = useGame();
   const [tab, setTab] = useState('chat');
   const mySlot = state.character?.player_slot ?? null;
 
@@ -16,7 +16,15 @@ export default function Investigation() {
     <div className="investigation-layout">
       <div className="case-banner">
         <strong>{state.caseTitle}</strong>
-        {state.source && state.source !== 'ai' && <span className="tag tag-muted">offline demo case</span>}
+        <span className="tag difficulty-badge">{state.difficulty}</span>
+        {state.source && state.source !== 'ai' && (
+          <span
+            className="tag tag-muted"
+            title={state.theme ? `Requested "${state.theme}" — using the offline default case instead.` : 'Using the offline default case.'}
+          >
+            offline demo case
+          </span>
+        )}
       </div>
 
       <div className="mobile-tabs">
@@ -33,7 +41,14 @@ export default function Investigation() {
 
       <div className="investigation-grid">
         <section className={`panel-chat ${panelHidden('chat')}`}>
-          <ChatPanel transcript={state.transcript} mySlot={mySlot} onSend={sendChat} onAsk={askGM} />
+          <ChatPanel
+            transcript={state.transcript}
+            mySlot={mySlot}
+            avatars={state.avatars}
+            onSend={sendChat}
+            onAsk={askGM}
+            onHint={state.difficulty === 'easy' ? askHint : null}
+          />
         </section>
 
         <section className={`panel-clues ${panelHidden('clues')}`}>

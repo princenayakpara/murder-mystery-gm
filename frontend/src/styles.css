@@ -237,6 +237,15 @@ select:focus {
   color: #f2b8b8;
 }
 
+.banner-info {
+  background: rgba(216, 169, 78, 0.12);
+  border: 1px solid rgba(216, 169, 78, 0.35);
+  color: var(--gold-soft);
+  justify-content: flex-start;
+  text-align: left;
+  line-height: 1.4;
+}
+
 .player-list {
   list-style: none;
   padding: 0;
@@ -670,4 +679,165 @@ select:focus {
   .hero h1 {
     font-size: 1.6rem;
   }
+}
+
+/* ---------- Avatars ---------- */
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--card-border);
+  background: var(--bg-alt);
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gm), var(--event));
+  color: #f3ece1;
+  font-family: Georgia, serif;
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1px solid var(--card-border);
+}
+
+.avatar-hero {
+  display: block;
+  margin: 0 auto 10px;
+  border-width: 2px;
+  border-color: var(--gold-soft);
+}
+
+.briefing-hero {
+  text-align: center;
+}
+
+.roster-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.roster-header-text {
+  flex: 1;
+}
+
+.msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.msg-avatar {
+  margin-top: 2px;
+}
+
+.msg-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-mine {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.vote-option {
+  gap: 10px;
+}
+
+/* ---------- Audio control ---------- */
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.audio-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audio-mute-btn {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-mute-btn:hover {
+  border-color: var(--gold-soft);
+}
+
+.audio-volume-slider {
+  width: 70px;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+
+.audio-volume-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Difficulty picker ---------- */
+
+.difficulty-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.difficulty-option {
+  text-align: left;
+  background: var(--bg-alt);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.difficulty-option strong {
+  color: var(--gold);
+}
+
+.difficulty-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.difficulty-option.selected {
+  border-color: var(--gold);
+  background: rgba(216, 169, 78, 0.08);
+}
+
+.difficulty-badge {
+  text-transform: capitalize;
+}
+
+.hint-btn {
+  background: rgba(216, 169, 78, 0.15);
+}
+
+.hint-btn:hover {
+  background: rgba(216, 169, 78, 0.28);
 }
