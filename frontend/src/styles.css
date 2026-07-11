@@ -1,17 +1,42 @@
+/* ============================================================
+   Design system: "Candlelit Haveli Noir"
+   Deep indigo-shadow rooms lit by brass lantern glow. Evidence is
+   treated as a physical object (typewritten index card), not chat
+   bubbles. See README for the full design rationale.
+   ============================================================ */
+
 :root {
-  --bg: #120b16;
-  --bg-alt: #1b1220;
-  --card: #221729;
-  --card-border: #3a2740;
-  --gold: #d8a94e;
-  --gold-soft: #b8935a;
-  --text: #f1e6e6;
-  --text-muted: #a897a8;
-  --danger: #c85a5a;
-  --success: #57d38c;
-  --gm: #6d4fa3;
-  --event: #8a4b6b;
+  --ink: #120f1a;           /* base background — deep indigo-black */
+  --shadow: #1f1830;        /* card/panel surface */
+  --shadow-alt: #170f22;    /* recessed surface (inputs, chat bubbles) */
+  --border: #3a2d4d;        /* hairline borders on shadow surfaces */
+  --brass: #c99a4e;         /* primary accent — lantern glow */
+  --brass-bright: #e8bc72;  /* brass hover/focus flare */
+  --blood: #9c3b3b;         /* danger accent — used sparingly */
+  --blood-bright: #c85a5a;
+  --parchment: #ece3c8;     /* evidence-card background — aged paper */
+  --parchment-ink: #2a2115; /* text color on parchment */
+  --text: #f1ece2;
+  --text-muted: #a99bb0;
+  --success: #6fae7f;
+  --gm-accent: #7c5fb0;     /* Game Master narrator voice */
+  --event-accent: #a85a86;  /* injected-event narration */
   --radius: 10px;
+
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-body: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-evidence: 'Special Elite', 'Courier New', monospace;
+
+  /* Backward-compatible aliases so nothing outside this file needs renaming. */
+  --bg: var(--ink);
+  --bg-alt: var(--shadow-alt);
+  --card: var(--shadow);
+  --card-border: var(--border);
+  --gold: var(--brass);
+  --gold-soft: var(--brass-bright);
+  --danger: var(--blood-bright);
+  --gm: var(--gm-accent);
+  --event: var(--event-accent);
 }
 
 * {
@@ -26,9 +51,18 @@ body,
 
 body {
   margin: 0;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at top, #241428 0%, var(--bg) 60%);
+  font-family: var(--font-body);
+  background:
+    radial-gradient(ellipse 900px 500px at 20% -10%, rgba(201, 154, 78, 0.08), transparent 60%),
+    radial-gradient(ellipse 700px 600px at 100% 10%, rgba(124, 95, 176, 0.07), transparent 55%),
+    var(--ink);
   color: var(--text);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .app-shell {
@@ -42,8 +76,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 14px 24px;
-  border-bottom: 1px solid var(--card-border);
-  background: rgba(18, 11, 22, 0.9);
+  border-bottom: 1px solid var(--border);
+  background: rgba(18, 15, 26, 0.92);
+  backdrop-filter: blur(6px);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -52,14 +87,18 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 600;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
   letter-spacing: 0.02em;
   cursor: pointer;
+  color: var(--brass);
 }
 
 .brand-icon {
-  font-size: 1.2rem;
+  font-size: 1.25rem;
+  filter: drop-shadow(0 0 6px rgba(201, 154, 78, 0.5));
 }
 
 .conn-badge {
@@ -69,13 +108,13 @@ body {
 }
 
 .conn-bad {
-  background: rgba(200, 90, 90, 0.2);
-  color: var(--danger);
+  background: rgba(156, 59, 59, 0.22);
+  color: var(--blood-bright);
 }
 
 .app-main {
   flex: 1;
-  padding: 24px 16px 60px;
+  padding: 28px 16px 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -96,17 +135,19 @@ body {
 }
 
 .hero h1 {
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 2.1rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.3rem;
   margin: 0 0 6px;
-  color: var(--gold);
+  color: var(--brass);
+  text-shadow: 0 0 24px rgba(201, 154, 78, 0.25);
 }
 
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  font-size: 0.75rem;
-  color: var(--gold-soft);
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+  color: var(--brass-bright);
   margin: 0 0 4px;
 }
 
@@ -126,29 +167,32 @@ body {
 }
 
 .card {
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: linear-gradient(180deg, var(--shadow), var(--shadow-alt));
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
 .card h2 {
   margin: 0 0 4px;
-  font-size: 1.05rem;
-  color: var(--gold);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--brass);
 }
 
 .card-secret {
-  border-color: rgba(200, 90, 90, 0.4);
-  background: linear-gradient(180deg, rgba(200, 90, 90, 0.07), var(--card));
+  border-color: rgba(156, 59, 59, 0.45);
+  background: linear-gradient(180deg, rgba(156, 59, 59, 0.09), var(--shadow-alt));
 }
 
 .card p,
 .card li {
-  line-height: 1.5;
+  line-height: 1.55;
   color: var(--text);
 }
 
@@ -165,51 +209,56 @@ label {
 
 input,
 select {
-  background: var(--bg-alt);
-  border: 1px solid var(--card-border);
+  background: var(--shadow-alt);
+  border: 1px solid var(--border);
   color: var(--text);
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 0.95rem;
+  font-family: var(--font-body);
   outline: none;
 }
 
 input:focus,
 select:focus {
-  border-color: var(--gold-soft);
+  border-color: var(--brass-bright);
 }
 
 .mono-input {
-  letter-spacing: 0.2em;
+  letter-spacing: 0.25em;
   text-transform: uppercase;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-evidence);
 }
 
 .primary-btn {
   margin-top: 10px;
-  background: linear-gradient(135deg, var(--gold), var(--gold-soft));
-  color: #1b1220;
+  background: linear-gradient(135deg, var(--brass-bright), var(--brass));
+  color: #201408;
   border: none;
   padding: 11px 18px;
   border-radius: 8px;
-  font-weight: 600;
+  font-weight: 700;
+  font-family: var(--font-body);
   cursor: pointer;
-  transition: transform 0.1s ease, opacity 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  box-shadow: 0 2px 10px rgba(201, 154, 78, 0.25);
 }
 
 .primary-btn:hover:not(:disabled) {
   transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(201, 154, 78, 0.35);
 }
 
 .primary-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .link-btn {
   background: none;
   border: none;
-  color: var(--gold-soft);
+  color: var(--brass-bright);
   cursor: pointer;
   font-size: 0.85rem;
   text-decoration: underline;
@@ -218,7 +267,7 @@ select:focus {
 }
 
 .link-btn.danger {
-  color: var(--danger);
+  color: var(--blood-bright);
 }
 
 .banner {
@@ -232,18 +281,18 @@ select:focus {
 }
 
 .banner-error {
-  background: rgba(200, 90, 90, 0.15);
-  border: 1px solid rgba(200, 90, 90, 0.4);
+  background: rgba(156, 59, 59, 0.16);
+  border: 1px solid rgba(156, 59, 59, 0.45);
   color: #f2b8b8;
 }
 
 .banner-info {
-  background: rgba(216, 169, 78, 0.12);
-  border: 1px solid rgba(216, 169, 78, 0.35);
-  color: var(--gold-soft);
+  background: rgba(201, 154, 78, 0.1);
+  border: 1px solid rgba(201, 154, 78, 0.35);
+  color: var(--brass-bright);
   justify-content: flex-start;
   text-align: left;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .player-list {
@@ -275,22 +324,22 @@ select:focus {
 .tag {
   font-size: 0.65rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: rgba(216, 169, 78, 0.18);
-  color: var(--gold);
+  letter-spacing: 0.06em;
+  background: rgba(201, 154, 78, 0.18);
+  color: var(--brass);
   padding: 2px 8px;
   border-radius: 999px;
   margin-left: 6px;
 }
 
 .tag-muted {
-  background: rgba(168, 151, 168, 0.15);
+  background: rgba(169, 155, 176, 0.15);
   color: var(--text-muted);
 }
 
 .tag-danger {
-  background: rgba(200, 90, 90, 0.2);
-  color: var(--danger);
+  background: rgba(156, 59, 59, 0.22);
+  color: var(--blood-bright);
 }
 
 .muted {
@@ -307,15 +356,18 @@ select:focus {
 }
 
 .waiting-note {
-  color: var(--gold-soft);
+  color: var(--brass-bright);
   font-style: italic;
 }
 
-/* ---------- Investigation layout ---------- */
+/* ============================================================
+   Investigation room — "the case board"
+   Suspects rail (pinned photos) | transcript | corkboard of clues
+   ============================================================ */
 
 .investigation-layout {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -326,8 +378,10 @@ select:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--gold);
-  font-family: Georgia, serif;
+  color: var(--brass);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
 }
 
 .mobile-tabs {
@@ -337,24 +391,29 @@ select:focus {
 
 .tab-btn {
   flex: 1;
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: var(--shadow);
+  border: 1px solid var(--border);
   color: var(--text-muted);
   padding: 9px;
   border-radius: 8px;
   cursor: pointer;
   font-size: 0.85rem;
+  font-family: var(--font-body);
 }
 
 .tab-btn.active {
-  background: var(--gold);
-  color: #1b1220;
-  border-color: var(--gold);
+  background: var(--brass);
+  color: #201408;
+  border-color: var(--brass);
+  font-weight: 600;
 }
 
+/* Visual order is suspects rail | transcript | case board, though the DOM order
+   (set in Investigation.jsx) is chat/clues/suspects — reordered here with `order`
+   so mobile tab logic (which toggles these same classes) doesn't need to change. */
 .investigation-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr;
   gap: 14px;
   flex: 1;
   min-height: 0;
@@ -363,14 +422,32 @@ select:focus {
 .panel-chat,
 .panel-clues,
 .panel-suspects {
-  background: var(--card);
-  border: 1px solid var(--card-border);
+  background: linear-gradient(180deg, var(--shadow), var(--shadow-alt));
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
   overflow-y: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.panel-suspects {
+  order: -1;
+}
+
+/* Clue board reads as a corkboard: subtle woven texture + warm wood tone. */
+.panel-clues {
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.04) 0 2px, transparent 2px 4px),
+    linear-gradient(180deg, #4a3423, #3a2818);
+  border-color: #5c4128;
+}
+
+.panel-clues h2 {
+  color: var(--parchment);
 }
 
 .chat-panel {
@@ -390,59 +467,110 @@ select:focus {
 }
 
 .msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.msg-body {
   padding: 8px 12px;
   border-radius: 10px;
+  max-width: 100%;
+  background: var(--shadow-alt);
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-chat .msg-body {
   max-width: 90%;
-  background: var(--bg-alt);
-  align-self: flex-start;
 }
 
 .msg-author {
   font-size: 0.72rem;
-  color: var(--gold-soft);
+  color: var(--brass-bright);
   margin-bottom: 2px;
   font-weight: 600;
+  font-family: var(--font-body);
 }
 
 .msg-text {
-  line-height: 1.45;
+  line-height: 1.5;
   white-space: pre-wrap;
+  font-family: var(--font-body);
 }
 
 .msg-mine {
-  align-self: flex-end;
-  background: rgba(216, 169, 78, 0.16);
+  flex-direction: row-reverse;
+}
+
+.msg-mine .msg-body {
+  background: rgba(201, 154, 78, 0.14);
+}
+
+.msg-avatar {
+  margin-top: 2px;
+}
+
+/* GM narration and injected events get their own voice: distinct accent colors,
+   centered, and set in the typewriter/evidence face — a clue "arriving" should
+   feel different from a player typing. */
+.msg-gm .msg-body {
+  background: rgba(124, 95, 176, 0.22);
+  border: 1px solid rgba(124, 95, 176, 0.5);
 }
 
 .msg-gm {
-  background: rgba(109, 79, 163, 0.25);
-  border: 1px solid rgba(109, 79, 163, 0.5);
-  align-self: center;
+  justify-content: center;
+}
+
+.msg-gm .msg-body {
   max-width: 100%;
+  flex: initial;
+}
+
+.msg-event .msg-body {
+  background: rgba(168, 90, 134, 0.22);
+  border: 1px solid rgba(168, 90, 134, 0.55);
+  font-family: var(--font-evidence);
+  font-style: normal;
 }
 
 .msg-event {
-  background: rgba(138, 75, 107, 0.25);
-  border: 1px solid rgba(138, 75, 107, 0.55);
-  align-self: center;
+  justify-content: center;
+}
+
+.msg-event .msg-body {
   max-width: 100%;
-  font-style: italic;
+  flex: initial;
+}
+
+/* Accusations flash a blood-red edge — the one place danger red is loud. */
+.msg-accusation .msg-body {
+  background: rgba(156, 59, 59, 0.2);
+  border: 1px solid var(--blood-bright);
+  box-shadow: 0 0 14px rgba(156, 59, 59, 0.25);
 }
 
 .msg-accusation {
-  background: rgba(200, 90, 90, 0.18);
-  border: 1px solid rgba(200, 90, 90, 0.4);
-  align-self: center;
+  justify-content: center;
+}
+
+.msg-accusation .msg-body {
   max-width: 100%;
+  flex: initial;
 }
 
 .msg-system {
-  align-self: center;
+  justify-content: center;
+}
+
+.msg-system .msg-body {
   background: transparent;
   color: var(--text-muted);
   font-size: 0.85rem;
   text-align: center;
   max-width: 100%;
+  flex: initial;
 }
 
 .msg-reveal {
@@ -454,31 +582,43 @@ select:focus {
   gap: 8px;
   margin-top: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .chat-input-row input {
   flex: 1;
+  min-width: 120px;
 }
 
 .mode-toggle {
   display: flex;
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .mode-btn {
-  background: var(--bg-alt);
+  background: var(--shadow-alt);
   border: none;
   color: var(--text-muted);
   padding: 9px 10px;
   cursor: pointer;
   font-size: 0.78rem;
+  font-family: var(--font-body);
 }
 
 .mode-btn.active {
-  background: var(--gm);
+  background: var(--gm-accent);
   color: white;
+}
+
+.hint-btn {
+  background: rgba(201, 154, 78, 0.18);
+  color: var(--brass-bright);
+}
+
+.hint-btn:hover {
+  background: rgba(201, 154, 78, 0.3);
 }
 
 .send-btn {
@@ -489,7 +629,17 @@ select:focus {
 .player-roster h2,
 .vote-panel h2 {
   margin-top: 0;
-  color: var(--gold);
+  font-family: var(--font-display);
+  color: var(--brass);
+}
+
+.player-roster h2,
+.vote-panel h2 {
+  color: var(--brass);
+}
+
+.clue-board .muted {
+  color: rgba(236, 227, 200, 0.65);
 }
 
 .clue-list {
@@ -498,31 +648,87 @@ select:focus {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
 }
 
+/* Signature element: a clue "pins" onto the corkboard when it first mounts (new
+   clue arrives) — drop-and-settle with a slight rotation and a push-pin dot.
+   React only mounts a new .clue-card when clue:new adds an item with a fresh
+   key, so existing cards never replay this on re-render/tab-switch. */
 .clue-card {
-  background: var(--bg-alt);
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  padding: 10px 12px;
+  position: relative;
+  background: var(--parchment);
+  color: var(--parchment-ink);
+  border-radius: 2px;
+  padding: 14px 14px 12px;
+  font-family: var(--font-evidence);
+  box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.35);
+  transform: rotate(-1deg);
+  animation: pin-drop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.clue-list li:nth-child(even) .clue-card {
+  transform: rotate(1.2deg);
+}
+
+.clue-list li:nth-child(3n) .clue-card {
+  transform: rotate(-2deg);
+}
+
+.clue-card::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #e8837a, var(--blood));
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes pin-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-36px) rotate(-10deg) scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(3px) rotate(2deg) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotate(-1deg) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clue-card {
+    animation: none;
+  }
 }
 
 .clue-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.clue-meta .tag {
+  background: rgba(42, 33, 21, 0.12);
+  color: var(--parchment-ink);
 }
 
 .clue-time {
-  font-size: 0.72rem;
-  color: var(--text-muted);
+  font-size: 0.7rem;
+  opacity: 0.65;
 }
 
 .clue-text {
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 0.92rem;
+  line-height: 1.5;
 }
 
 .roster-list {
@@ -535,21 +741,29 @@ select:focus {
 }
 
 .roster-card {
-  background: var(--bg-alt);
-  border: 1px solid var(--card-border);
+  background: var(--shadow-alt);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
 }
 
 .roster-mine {
-  border-color: var(--gold-soft);
+  border-color: var(--brass-bright);
 }
 
 .roster-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   cursor: pointer;
+}
+
+.roster-header-text {
+  flex: 1;
+}
+
+.roster-header strong {
+  font-family: var(--font-display);
 }
 
 .roster-body {
@@ -559,13 +773,17 @@ select:focus {
 
 .accuse-btn {
   margin-top: 8px;
-  background: rgba(200, 90, 90, 0.2);
-  border: 1px solid rgba(200, 90, 90, 0.5);
+  background: rgba(156, 59, 59, 0.2);
+  border: 1px solid rgba(156, 59, 59, 0.55);
   color: #f2b8b8;
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
+}
+
+.accuse-btn:hover {
+  background: rgba(156, 59, 59, 0.32);
 }
 
 .vote-options {
@@ -578,9 +796,9 @@ select:focus {
 .vote-option {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--bg-alt);
-  border: 1px solid var(--card-border);
+  gap: 10px;
+  background: var(--shadow-alt);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
   cursor: pointer;
@@ -588,17 +806,22 @@ select:focus {
 }
 
 .vote-option.selected {
-  border-color: var(--gold);
+  border-color: var(--brass);
+  background: rgba(201, 154, 78, 0.1);
 }
 
+/* ---------- Reveal screen — the case file closes ---------- */
+
 .reveal-card {
-  background: var(--bg-alt);
+  background: var(--parchment);
+  border-color: #b8a97a;
 }
 
 .reveal-text {
   white-space: pre-wrap;
-  font-family: Georgia, serif;
-  line-height: 1.6;
+  font-family: var(--font-evidence);
+  color: var(--parchment-ink);
+  line-height: 1.7;
   margin: 0;
 }
 
@@ -625,7 +848,7 @@ select:focus {
 }
 
 .past-game-card:hover {
-  border-color: var(--gold-soft);
+  border-color: var(--brass-bright);
 }
 
 .replay-transcript {
@@ -638,7 +861,128 @@ select:focus {
 }
 
 .replay-line strong {
-  color: var(--gold-soft);
+  color: var(--brass-bright);
+}
+
+/* ---------- Avatars ---------- */
+
+.avatar {
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--shadow-alt);
+}
+
+.avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gm-accent), var(--event-accent));
+  color: #f3ece1;
+  font-family: var(--font-display);
+  font-weight: 700;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+
+.avatar-hero {
+  display: block;
+  margin: 0 auto 10px;
+  border-width: 2px;
+  border-color: var(--brass-bright);
+  box-shadow: 0 0 20px rgba(201, 154, 78, 0.3);
+}
+
+.briefing-hero {
+  text-align: center;
+}
+
+/* ---------- Audio control ---------- */
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.audio-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audio-mute-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-mute-btn:hover {
+  border-color: var(--brass-bright);
+}
+
+.audio-volume-slider {
+  width: 70px;
+  accent-color: var(--brass);
+  cursor: pointer;
+}
+
+.audio-volume-slider:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Difficulty picker ---------- */
+
+.difficulty-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.difficulty-option {
+  text-align: left;
+  background: var(--shadow-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-family: var(--font-body);
+}
+
+.difficulty-option strong {
+  color: var(--brass);
+  font-family: var(--font-display);
+}
+
+.difficulty-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.difficulty-option.selected {
+  border-color: var(--brass);
+  background: rgba(201, 154, 78, 0.09);
+}
+
+.difficulty-badge {
+  text-transform: capitalize;
 }
 
 /* ---------- Responsive ---------- */
@@ -672,172 +1016,19 @@ select:focus {
     padding: 10px 14px;
   }
 
+  .brand {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 46vw;
+  }
+
   .card-row {
     flex-direction: column;
   }
 
   .hero h1 {
-    font-size: 1.6rem;
+    font-size: 1.7rem;
   }
-}
-
-/* ---------- Avatars ---------- */
-
-.avatar {
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid var(--card-border);
-  background: var(--bg-alt);
-}
-
-.avatar-fallback {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--gm), var(--event));
-  color: #f3ece1;
-  font-family: Georgia, serif;
-  font-weight: 700;
-  flex-shrink: 0;
-  border: 1px solid var(--card-border);
-}
-
-.avatar-hero {
-  display: block;
-  margin: 0 auto 10px;
-  border-width: 2px;
-  border-color: var(--gold-soft);
-}
-
-.briefing-hero {
-  text-align: center;
-}
-
-.roster-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-}
-
-.roster-header-text {
-  flex: 1;
-}
-
-.msg {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.msg-avatar {
-  margin-top: 2px;
-}
-
-.msg-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.msg-mine {
-  flex-direction: row-reverse;
-  text-align: right;
-}
-
-.vote-option {
-  gap: 10px;
-}
-
-/* ---------- Audio control ---------- */
-
-.header-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.audio-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.audio-mute-btn {
-  background: transparent;
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  width: 34px;
-  height: 34px;
-  font-size: 1rem;
-  cursor: pointer;
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.audio-mute-btn:hover {
-  border-color: var(--gold-soft);
-}
-
-.audio-volume-slider {
-  width: 70px;
-  accent-color: var(--gold);
-  cursor: pointer;
-}
-
-.audio-volume-slider:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* ---------- Difficulty picker ---------- */
-
-.difficulty-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.difficulty-option {
-  text-align: left;
-  background: var(--bg-alt);
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  color: var(--text);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.difficulty-option strong {
-  color: var(--gold);
-}
-
-.difficulty-desc {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.35;
-}
-
-.difficulty-option.selected {
-  border-color: var(--gold);
-  background: rgba(216, 169, 78, 0.08);
-}
-
-.difficulty-badge {
-  text-transform: capitalize;
-}
-
-.hint-btn {
-  background: rgba(216, 169, 78, 0.15);
-}
-
-.hint-btn:hover {
-  background: rgba(216, 169, 78, 0.28);
 }
