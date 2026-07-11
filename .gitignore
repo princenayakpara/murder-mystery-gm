@@ -4,3 +4,4 @@ backend/data/
 .env
 .env.local
 *.log
+.vercel
