@@ -2,6 +2,7 @@ import { roomManager, normalizeDifficulty } from '../rooms/roomManager.js';
 import { gameMaster } from '../gm/gameMaster.js';
 import { saveSnapshot } from '../db/index.js';
 import { pregenerateAvatars } from '../gm/avatarGenerator.js';
+import { pregenerateScenes } from '../gm/sceneGenerator.js';
 
 const TIME_STALL_INTERVAL_MS = 20 * 1000;
 const activeRoomIntervals = new Map();
@@ -106,6 +107,7 @@ function fullStateForReconnect(room, player) {
     character: player.slot != null ? roomManager.getCharacterFor(room, player.slot) : null,
     roster: room.status === 'lobby' ? [] : roomManager.publicCharacterRoster(room),
     avatars: room.status === 'lobby' ? {} : roomManager.avatarMap(room),
+    scenes: room.status === 'lobby' ? {} : roomManager.sceneMap(room),
     reveal: room.status === 'revealed' ? room.reveal : null,
     hasVoted: room.votes[player.slot] != null,
   };
@@ -174,6 +176,7 @@ export function registerHandlers(io, socket) {
       gameMaster.initRoom(room);
       roomManager.assignSlots(room);
       pregenerateAvatars(mystery); // warm the avatar cache so briefing screens load instantly
+      pregenerateScenes(mystery); // warm the VN background cache the same way
 
       cb?.({ ok: true, source, reason, difficulty: room.difficulty, theme: room.theme });
       io.to(room.code).emit('game:status', {
@@ -184,6 +187,7 @@ export function registerHandlers(io, socket) {
         theme: room.theme,
       });
       room.players.forEach((p) => sendPrivateCharacter(io, room, p));
+      io.to(room.code).emit('game:scenes', roomManager.sceneMap(room));
       broadcastLobby(io, room);
       startTimeStallInterval(io, room);
       persist(room);

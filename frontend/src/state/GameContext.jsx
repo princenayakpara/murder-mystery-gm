@@ -18,7 +18,8 @@ const initialState = {
   difficulty: 'medium',
   character: null,
   roster: [],
-  avatars: {}, // slot -> avatarUrl
+  avatars: {}, // slot -> { neutral, pressure } avatarUrls
+  scenes: {}, // sceneKey -> backgroundUrl, for the VN scene layer
   transcript: [],
   clues: [],
   briefingReady: { readyCount: 0, total: 0 },
@@ -60,6 +61,7 @@ function reducer(state, action) {
         character: action.state.character ?? state.character,
         roster: action.state.roster?.length ? action.state.roster : state.roster,
         avatars: Object.keys(action.state.avatars || {}).length ? action.state.avatars : state.avatars,
+        scenes: Object.keys(action.state.scenes || {}).length ? action.state.scenes : state.scenes,
         reveal: action.state.reveal ?? state.reveal,
         hasVoted: action.state.hasVoted,
       };
@@ -91,6 +93,8 @@ function reducer(state, action) {
       return { ...state, roster: action.roster };
     case 'AVATARS_UPDATE':
       return { ...state, avatars: action.avatars };
+    case 'SCENES_UPDATE':
+      return { ...state, scenes: action.scenes };
     case 'CHAT_MESSAGE':
       return { ...state, transcript: [...state.transcript, action.message] };
     case 'CLUE_NEW':
@@ -165,6 +169,9 @@ export function GameProvider({ children }) {
     function onAvatarsUpdate(avatars) {
       dispatch({ type: 'AVATARS_UPDATE', avatars });
     }
+    function onScenesUpdate(scenes) {
+      dispatch({ type: 'SCENES_UPDATE', scenes });
+    }
     function onChatMessage(message) {
       dispatch({ type: 'CHAT_MESSAGE', message });
     }
@@ -186,6 +193,7 @@ export function GameProvider({ children }) {
     socket.on('briefing:update', onBriefingUpdate);
     socket.on('roster:reveal', onRosterReveal);
     socket.on('game:avatars', onAvatarsUpdate);
+    socket.on('game:scenes', onScenesUpdate);
     socket.on('chat:message', onChatMessage);
     socket.on('clue:new', onClueNew);
     socket.on('vote:update', onVoteUpdate);
@@ -202,6 +210,7 @@ export function GameProvider({ children }) {
       socket.off('briefing:update', onBriefingUpdate);
       socket.off('roster:reveal', onRosterReveal);
       socket.off('game:avatars', onAvatarsUpdate);
+      socket.off('game:scenes', onScenesUpdate);
       socket.off('chat:message', onChatMessage);
       socket.off('clue:new', onClueNew);
       socket.off('vote:update', onVoteUpdate);

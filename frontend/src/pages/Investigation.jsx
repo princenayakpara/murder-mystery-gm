@@ -4,10 +4,12 @@ import ChatPanel from '../components/ChatPanel.jsx';
 import ClueBoard from '../components/ClueBoard.jsx';
 import PlayerList from '../components/PlayerList.jsx';
 import VotePanel from '../components/VotePanel.jsx';
+import VnStage from '../components/vn/VnStage.jsx';
 
 export default function Investigation() {
   const { state, sendChat, askGM, askHint, accuse, castVote, endGame } = useGame();
   const [tab, setTab] = useState('chat');
+  const [chatView, setChatView] = useState('scene'); // 'scene' | 'transcript'
   const mySlot = state.character?.player_slot ?? null;
 
   const panelHidden = (name) => (tab === name ? '' : 'mobile-hidden');
@@ -41,6 +43,33 @@ export default function Investigation() {
 
       <div className="investigation-grid">
         <section className={`panel-chat ${panelHidden('chat')}`}>
+          <div className="vn-view-toggle">
+            <button
+              type="button"
+              className={chatView === 'scene' ? 'tab-btn active' : 'tab-btn'}
+              onClick={() => setChatView('scene')}
+            >
+              Scene
+            </button>
+            <button
+              type="button"
+              className={chatView === 'transcript' ? 'tab-btn active' : 'tab-btn'}
+              onClick={() => setChatView('transcript')}
+            >
+              Full Transcript
+            </button>
+          </div>
+
+          {chatView === 'scene' && (
+            <VnStage
+              transcript={state.transcript}
+              avatars={state.avatars}
+              roster={state.roster}
+              mySlot={mySlot}
+              scenes={state.scenes}
+            />
+          )}
+
           <ChatPanel
             transcript={state.transcript}
             mySlot={mySlot}
@@ -48,6 +77,7 @@ export default function Investigation() {
             onSend={sendChat}
             onAsk={askGM}
             onHint={state.difficulty === 'easy' ? askHint : null}
+            hideLog={chatView === 'scene'}
           />
         </section>
 

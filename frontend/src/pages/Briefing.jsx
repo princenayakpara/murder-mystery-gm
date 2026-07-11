@@ -1,6 +1,8 @@
 import React from 'react';
 import { useGame } from '../state/GameContext.jsx';
 import Avatar from '../components/Avatar.jsx';
+import SceneLayer from '../components/vn/SceneLayer.jsx';
+import PortraitDock from '../components/vn/PortraitDock.jsx';
 
 export default function Briefing() {
   const { state, markReady } = useGame();
@@ -18,8 +20,18 @@ export default function Briefing() {
 
   return (
     <div className="page-narrow">
-      <div className="hero briefing-hero">
+      {state.scenes?.briefing ? (
+        <div className="vn-stage vn-stage-briefing">
+          <SceneLayer sceneUrl={state.scenes.briefing}>
+            <div className="vn-portrait-row">
+              <PortraitDock name={c.character_name} avatarUrl={c.avatarUrl} side="right" />
+            </div>
+          </SceneLayer>
+        </div>
+      ) : (
         <Avatar src={c.avatarUrl} name={c.character_name} size={96} className="avatar-hero" />
+      )}
+      <div className="hero briefing-hero">
         <p className="eyebrow">{state.caseTitle}</p>
         <h1>Your Character: {c.character_name}</h1>
       </div>

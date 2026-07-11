@@ -1,5 +1,6 @@
 import { generateRoomCode, generateId } from '../utils/ids.js';
 import { avatarUrlFor } from '../gm/avatarGenerator.js';
+import { sceneUrlFor, SCENE_KEYS } from '../gm/sceneGenerator.js';
 
 /**
  * @typedef {Object} Player
@@ -170,7 +171,11 @@ class RoomManager {
     if (!full) return null;
     // Never leak is_murderer or true_whereabouts to the client.
     const { is_murderer, true_whereabouts, ...safe } = full;
-    return { ...safe, avatarUrl: avatarUrlFor(room.mystery.case_id, full.character_name) };
+    return {
+      ...safe,
+      avatarUrl: avatarUrlFor(room.mystery.case_id, full.character_name),
+      avatarUrlPressure: avatarUrlFor(room.mystery.case_id, full.character_name, 'pressure'),
+    };
   }
 
   publicPlayerList(room) {
@@ -195,14 +200,30 @@ class RoomManager {
       publicBio: c.public_bio,
       controlledBy: room.players.find((p) => p.slot === c.player_slot)?.name || null,
       avatarUrl: avatarUrlFor(room.mystery.case_id, c.character_name),
+      avatarUrlPressure: avatarUrlFor(room.mystery.case_id, c.character_name, 'pressure'),
     }));
   }
 
-  /** slot -> avatarUrl map, so the frontend can decorate chat messages by authorSlot. */
+  /** slot -> {neutral, pressure} avatarUrl map, so the frontend can decorate messages by authorSlot. */
   avatarMap(room) {
     if (!room.mystery) return {};
     return Object.fromEntries(
-      room.mystery.players.map((c) => [c.player_slot, avatarUrlFor(room.mystery.case_id, c.character_name)])
+      room.mystery.players.map((c) => [
+        c.player_slot,
+        {
+          neutral: avatarUrlFor(room.mystery.case_id, c.character_name),
+          pressure: avatarUrlFor(room.mystery.case_id, c.character_name, 'pressure'),
+        },
+      ])
+    );
+  }
+
+  /** sceneKey -> URL map for the VN background layer. */
+  sceneMap(room) {
+    if (!room.mystery) return {};
+    const setting = encodeURIComponent(room.mystery.setting || '');
+    return Object.fromEntries(
+      SCENE_KEYS.map((key) => [key, `${sceneUrlFor(room.mystery.case_id, key)}?setting=${setting}`])
     );
   }
 

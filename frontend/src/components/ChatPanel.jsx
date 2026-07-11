@@ -24,14 +24,14 @@ function speakerLabel(m) {
   return m.authorName;
 }
 
-export default function ChatPanel({ transcript, mySlot, avatars = {}, onSend, onAsk, onHint }) {
+export default function ChatPanel({ transcript, mySlot, avatars = {}, onSend, onAsk, onHint, hideLog = false }) {
   const [text, setText] = useState('');
   const [mode, setMode] = useState('chat'); // 'chat' | 'ask'
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  }, [transcript.length]);
+    if (!hideLog) bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [transcript.length, hideLog]);
 
   const submit = (e) => {
     e.preventDefault();
@@ -44,22 +44,29 @@ export default function ChatPanel({ transcript, mySlot, avatars = {}, onSend, on
 
   return (
     <div className="chat-panel">
-      <div className="chat-scroll">
-        {transcript.map((m) => {
-          const inCharacter = m.authorSlot != null;
-          const avatarUrl = inCharacter ? avatars[m.authorSlot] : null;
-          return (
-            <div key={m.id} className={messageClass(m.type) + (m.authorSlot === mySlot ? ' msg-mine' : '')}>
-              {inCharacter && <Avatar src={avatarUrl} name={m.authorName} size={30} className="msg-avatar" />}
-              <div className="msg-body">
-                {speakerLabel(m) && <div className="msg-author">{speakerLabel(m)}</div>}
-                <div className="msg-text">{m.text}</div>
+      {!hideLog && (
+        <div className="chat-scroll">
+          {transcript.map((m) => {
+            const inCharacter = m.authorSlot != null;
+            const isAccusation = m.type === 'accusation';
+            // Accusation text is third-person ("X accuses Y") — show the accused
+            // (targetSlot) in their "under pressure" pose, not the accuser speaking.
+            const avatarSlot = isAccusation ? m.targetSlot : m.authorSlot;
+            const avatarSet = avatarSlot != null ? avatars[avatarSlot] : null;
+            const avatarUrl = avatarSet && (isAccusation ? avatarSet.pressure : avatarSet.neutral);
+            return (
+              <div key={m.id} className={messageClass(m.type) + (m.authorSlot === mySlot ? ' msg-mine' : '')}>
+                {inCharacter && <Avatar src={avatarUrl} name={m.authorName} size={30} className="msg-avatar" />}
+                <div className="msg-body">
+                  {speakerLabel(m) && <div className="msg-author">{speakerLabel(m)}</div>}
+                  <div className="msg-text">{m.text}</div>
+                </div>
               </div>
-            </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
+      )}
       <form className="chat-input-row" onSubmit={submit}>
         <div className="mode-toggle">
           <button type="button" className={mode === 'chat' ? 'mode-btn active' : 'mode-btn'} onClick={() => setMode('chat')}>

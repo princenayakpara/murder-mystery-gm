@@ -108,11 +108,18 @@ const SHAPE_BUILDERS = [
   },
 ];
 
+export const AVATAR_MOODS = ['neutral', 'pressure'];
+
 /**
  * Renders a deterministic 256x256 SVG portrait for a character, seeded on
  * `${caseId}:${characterName}` so the same case always gets the same look.
+ * `mood` gives a second, visually distinct pose for the VN dialogue layer: 'neutral'
+ * (default, used everywhere else in the app) or 'pressure' (under-pressure — used
+ * when the VN layer shows a character being accused or grilled). Mood only changes
+ * framing/lighting, not the underlying seeded identity, so a character stays
+ * recognizable across both.
  */
-export function renderAvatarSvg(caseId, characterName) {
+export function renderAvatarSvg(caseId, characterName, mood = 'neutral') {
   const seed = hashString(`${caseId}:${characterName}`);
   const rand = seededRandom(seed);
 
@@ -130,7 +137,16 @@ export function renderAvatarSvg(caseId, characterName) {
   const shapeBuilder = SHAPE_BUILDERS[Math.floor(rand() * SHAPE_BUILDERS.length)];
   const pattern = shapeBuilder(rand, 256, 256, accent);
   const initials = getInitials(characterName);
-  const gradId = `g${seed}`;
+  const gradId = `g${seed}${mood}`;
+
+  const isPressure = mood === 'pressure';
+  // Under pressure: a tighter red-tinted vignette and a slight frame tilt read as
+  // "cornered", while keeping the same base gradient/initials/pattern identity.
+  const vignette = isPressure
+    ? `<rect width="256" height="256" fill="url(#vignette${gradId})"/>`
+    : '';
+  const ringColor = isPressure ? '#c85a5a' : accent;
+  const transform = isPressure ? ' transform="rotate(-2 128 128)"' : '';
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
   <defs>
@@ -138,43 +154,56 @@ export function renderAvatarSvg(caseId, characterName) {
       <stop offset="0%" stop-color="${bg1}"/>
       <stop offset="100%" stop-color="${bg2}"/>
     </linearGradient>
+    <radialGradient id="vignette${gradId}" cx="50%" cy="50%" r="65%">
+      <stop offset="0%" stop-color="#9c3b3b" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#3a0808" stop-opacity="0.45"/>
+    </radialGradient>
   </defs>
-  <rect width="256" height="256" fill="url(#${gradId})"/>
-  <g>${pattern}</g>
-  <circle cx="128" cy="128" r="118" fill="none" stroke="${accent}" stroke-width="3" opacity="0.35"/>
-  <text x="128" y="128" text-anchor="middle" dominant-baseline="central"
-        font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="700"
-        fill="#f3ece1" opacity="0.94">${initials}</text>
+  <g${transform}>
+    <rect width="256" height="256" fill="url(#${gradId})"/>
+    <g>${pattern}</g>
+    ${vignette}
+    <circle cx="128" cy="128" r="118" fill="none" stroke="${ringColor}" stroke-width="3" opacity="0.4"/>
+    <text x="128" y="128" text-anchor="middle" dominant-baseline="central"
+          font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="700"
+          fill="#f3ece1" opacity="0.94">${initials}</text>
+  </g>
 </svg>`;
 }
 
-function cachePath(caseId, slug) {
+function cachePath(caseId, slug, mood = 'neutral') {
   const caseDir = path.join(AVATAR_DIR, slugify(caseId));
   if (!fs.existsSync(caseDir)) fs.mkdirSync(caseDir, { recursive: true });
-  return path.join(caseDir, `${slug}.svg`);
+  const suffix = mood === 'neutral' ? '' : `.${mood}`;
+  return path.join(caseDir, `${slug}${suffix}.svg`);
 }
 
-/** Returns the cached SVG for this case+character, generating and caching it on first call. */
-export function getOrCreateAvatarSvg(caseId, characterName) {
+/** Returns the cached SVG for this case+character+mood, generating and caching it on first call. */
+export function getOrCreateAvatarSvg(caseId, characterName, mood = 'neutral') {
+  const resolvedMood = AVATAR_MOODS.includes(mood) ? mood : 'neutral';
   const slug = slugify(characterName);
-  const filePath = cachePath(caseId, slug);
+  const filePath = cachePath(caseId, slug, resolvedMood);
   if (fs.existsSync(filePath)) {
     return fs.readFileSync(filePath, 'utf-8');
   }
-  const svg = renderAvatarSvg(caseId, characterName);
+  const svg = renderAvatarSvg(caseId, characterName, resolvedMood);
   fs.writeFileSync(filePath, svg, 'utf-8');
   return svg;
 }
 
 /** Public URL path (relative) the frontend can point an <img> at. */
-export function avatarUrlFor(caseId, characterName) {
-  return `/api/avatars/${encodeURIComponent(slugify(caseId))}/${encodeURIComponent(slugify(characterName))}.svg`;
+export function avatarUrlFor(caseId, characterName, mood = 'neutral') {
+  const resolvedMood = AVATAR_MOODS.includes(mood) ? mood : 'neutral';
+  const suffix = resolvedMood === 'neutral' ? '' : `.${resolvedMood}`;
+  return `/api/avatars/${encodeURIComponent(slugify(caseId))}/${encodeURIComponent(slugify(characterName))}${suffix}.svg`;
 }
 
-/** Pre-warms the cache for every character in a mystery — called once at game start. */
+/** Pre-warms the cache for every character in a mystery (both moods) — called once at game start. */
 export function pregenerateAvatars(mystery) {
   for (const p of mystery.players) {
-    getOrCreateAvatarSvg(mystery.case_id, p.character_name);
+    for (const mood of AVATAR_MOODS) {
+      getOrCreateAvatarSvg(mystery.case_id, p.character_name, mood);
+    }
   }
 }
 

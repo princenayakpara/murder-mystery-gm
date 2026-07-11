@@ -1,5 +1,8 @@
 import React from 'react';
 import { useGame } from '../state/GameContext.jsx';
+import SceneLayer from '../components/vn/SceneLayer.jsx';
+import PortraitDock from '../components/vn/PortraitDock.jsx';
+import DialogueBox from '../components/vn/DialogueBox.jsx';
 
 export default function Reveal() {
   const { state, startNewGame, setView } = useGame();
@@ -23,6 +26,7 @@ export default function Reveal() {
 
   const correctVoters = Object.entries(votes || {}).filter(([, target]) => target === reveal.murdererSlot).length;
   const totalVoters = Object.keys(votes || {}).length;
+  const murdererAvatar = roster.find((r) => r.slot === reveal.murdererSlot)?.avatarUrl;
 
   return (
     <div className="page-narrow">
@@ -35,6 +39,21 @@ export default function Reveal() {
           </p>
         )}
       </div>
+
+      {state.scenes?.reveal && (
+        <div className="vn-stage">
+          <SceneLayer sceneUrl={state.scenes.reveal}>
+            <div className="vn-portrait-row">
+              <PortraitDock name={reveal.murdererName} avatarUrl={murdererAvatar} side="right" />
+            </div>
+            <DialogueBox
+              speakerName="Game Master"
+              kind="reveal"
+              text={`${reveal.murdererName} is the murderer. Read the full case-file reveal below.`}
+            />
+          </SceneLayer>
+        </div>
+      )}
 
       {Object.keys(tally).length > 0 && (
         <div className="card">
